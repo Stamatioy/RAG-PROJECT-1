@@ -1,6 +1,6 @@
 To run llama.cpp server: Open a powershell window
 
-cd "D:\Programming\Projects\RAG\Simple RAG\Ancient Greece RAG\src\llama_cpp"
+cd "D:\Programming\Projects\RAG\Simple RAG\RAG Project 1\src\llama_cpp"
 
 .\llama-server.exe `
 -m "..\models\qwen2.5-7b-instruct-q5_k_m-00001-of-00002.gguf" `

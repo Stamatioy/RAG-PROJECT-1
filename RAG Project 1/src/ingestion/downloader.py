@@ -3,9 +3,9 @@ import os
 import json
 from datetime import datetime
 from ingestion.cleaner import clean_article
+from config import RAW_DIR
 
-
-RAW_DATA_PATH = rf"D:\Programming\Projects\RAG\Simple RAG\Ancient Greece RAG\data\raw"
+#RAW_DATA_PATH = rf"D:\Programming\Projects\RAG\Simple RAG\RAG Project 1\data\raw"
 
 
 ARTICLES = [
@@ -90,7 +90,7 @@ def save_article(article):
     )
 
     filepath = os.path.join(
-        RAW_DATA_PATH,
+        RAW_DIR,
         f"{filename}.json"
     )
 
@@ -111,7 +111,7 @@ def save_article(article):
 def main():
 
     os.makedirs(
-        RAW_DATA_PATH,
+        RAW_DIR,
         exist_ok=True
     )
 

@@ -2,57 +2,54 @@ import faiss
 import json
 import numpy as np
 from sentence_transformers import SentenceTransformer
-
-MIN_SCORE =  0.4
-# Paths
-INDEX_PATH = rf"D:\Programming\Projects\RAG\Simple RAG\Ancient Greece RAG\data\processed\faiss.index"
-CHUNKS_PATH = rf"D:\Programming\Projects\RAG\Simple RAG\Ancient Greece RAG\data\processed\chunks.json"
+from config import INDEX_PATH, CHUNKS_PATH, EMBEDDING_MODEL, MIN_SCORE, TOP_K
 
 
-# Load embedding model
+#INDEX_PATH = rf"D:\Programming\Projects\RAG\Simple RAG\RAG Project 1\data\processed\faiss.index"
+#CHUNKS_PATH = rf"D:\Programming\Projects\RAG\Simple RAG\RAG Project 1\data\processed\chunks.json"
+
+
+
+print("Loading embedding model...")
+
 model = SentenceTransformer(
-    "all-MiniLM-L6-v2"
+    EMBEDDING_MODEL
 )
 
 
-def load_vector_store():
-    """
-    Loads FAISS index and chunk metadata.
-    """
 
-    index = faiss.read_index(
-        INDEX_PATH
-    )
+print("Loading FAISS index...")
 
-    with open(
-        CHUNKS_PATH,
-        "r",
-        encoding="utf-8"
-    ) as f:
-        chunks = json.load(f)
+index = faiss.read_index(
+    str(INDEX_PATH)
+)
 
-    return index, chunks
+
+
+print("Loading chunks...")
+
+with open(
+    CHUNKS_PATH,
+    "r",
+    encoding="utf-8"
+) as f:
+    chunks = json.load(f)
+
+
+print("Retriever ready.")
 
 
 
 def retrieve(
         query,
-        k=5
+        k=TOP_K
 ):
-    """
-    Retrieve the k most relevant chunks.
-    """
 
-    index, chunks = load_vector_store()
-
-
-    # Convert query to embedding
     query_embedding = model.encode(
         [query]
     )
 
 
-    # Search FAISS
     distances, indices = index.search(
         np.array(query_embedding),
         k
@@ -62,10 +59,14 @@ def retrieve(
     results = []
 
 
-    for score, idx in zip(distances[0], indices[0]):
+    for score, idx in zip(
+        distances[0],
+        indices[0]
+    ):
 
         if score < MIN_SCORE:
             continue
+
 
         results.append(
             {

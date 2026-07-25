@@ -1,20 +1,20 @@
 import os
 import json
+from config import RAW_DIR
 
-
-RAW_PATH = rf"D:\Programming\Projects\RAG\Simple RAG\Ancient Greece RAG\data\raw"
+#RAW_PATH = rf"D:\Programming\Projects\RAG\Simple RAG\RAG Project 1\data\raw"
 
 
 def load_documents():
 
     documents = []
 
-    for filename in os.listdir(RAW_PATH):
+    for filename in os.listdir(RAW_DIR):
 
         if filename.endswith(".json"):
 
             filepath = os.path.join(
-                RAW_PATH,
+                RAW_DIR,
                 filename
             )
 

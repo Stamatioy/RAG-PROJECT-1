@@ -2,21 +2,21 @@ import faiss
 import numpy as np
 import json
 import os
+from config import PROCESSED_DIR
 
-
-PROCESSED_PATH = rf"D:\Programming\Projects\RAG\Simple RAG\Ancient Greece RAG\data\processed"
+#PROCESSED_PATH = rf"D:\Programming\Projects\RAG\Simple RAG\RAG Project 1\data\processed"
 
 
 def create_vector_store(embeddings, chunks):
 
-    print("Creating folder:", PROCESSED_PATH)
+    print("Creating folder:", PROCESSED_DIR)
 
     os.makedirs(
-        PROCESSED_PATH,
+        PROCESSED_DIR,
         exist_ok=True
     )
 
-    print("Folder exists:", os.path.exists(PROCESSED_PATH))
+    print("Folder exists:", os.path.exists(PROCESSED_DIR))
 
 
     dimension = embeddings.shape[1]
@@ -33,12 +33,12 @@ def create_vector_store(embeddings, chunks):
 
     faiss.write_index(
         index,
-        os.path.join(PROCESSED_PATH, "faiss.index")
+        os.path.join(PROCESSED_DIR, "faiss.index")
     )
 
 
     with open(
-        os.path.join(PROCESSED_PATH, "chunks.json"),
+        os.path.join(PROCESSED_DIR, "chunks.json"),
         "w",
         encoding="utf-8"
     ) as f:
