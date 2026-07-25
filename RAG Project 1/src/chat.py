@@ -1,6 +1,6 @@
 from retrieval.retriever import retrieve
-from prompt_builder import build_prompt
-from llm import LLM
+from generation.prompt_builder import build_prompt
+from generation.llm import LLM
 
 
 

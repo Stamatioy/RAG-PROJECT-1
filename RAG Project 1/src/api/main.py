@@ -1,6 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
+from api.exceptions import RetrievalError
 from api.routes import router
 
 
@@ -9,6 +11,18 @@ app = FastAPI(
     description="Chat with Ancient Greece Wikipedia knowledge base"
 )
 
+@app.exception_handler(RetrievalError)
+async def retrieval_error_handler(
+    request: Request,
+    exc: RetrievalError
+):
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "retrieval_error",
+            "message": str(exc)
+        }
+    )
 
 app.add_middleware(
     CORSMiddleware,
