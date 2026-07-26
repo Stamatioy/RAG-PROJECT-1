@@ -12,3 +12,5 @@ cd "D:\Programming\Projects\RAG\Simple RAG\RAG Project 1"
 
 uvicorn src.api.main:app --reload
 
+To run frontend:
+

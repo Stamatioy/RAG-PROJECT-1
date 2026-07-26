@@ -1,33 +1,168 @@
 import { useState } from "react";
 import "./App.css";
 
+const API_URL = "http://localhost:8000/chat";
+
 function App() {
   const [question, setQuestion] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
   const [messages, setMessages] = useState([
     {
       role: "assistant",
       content: "Hello! Ask me something about Ancient Greece.",
+      sources: [],
     },
   ]);
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
 
     const trimmedQuestion = question.trim();
 
-    if (!trimmedQuestion) {
+    if (!trimmedQuestion || isLoading) {
       return;
     }
 
+    const userMessage = {
+      role: "user",
+      content: trimmedQuestion,
+      sources: [],
+    };
+
+    const assistantMessage = {
+      role: "assistant",
+      content: "",
+      sources: [],
+    };
+
     setMessages((currentMessages) => [
       ...currentMessages,
-      {
-        role: "user",
-        content: trimmedQuestion,
-      },
+      userMessage,
+      assistantMessage,
     ]);
 
     setQuestion("");
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          question: trimmedQuestion,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+
+        throw new Error(
+          errorData?.message || `Request failed with status ${response.status}`
+        );
+      }
+
+      if (!response.body) {
+        throw new Error("The server returned no response stream.");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      let buffer = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+
+        if (done) {
+          break;
+        }
+
+        buffer += decoder.decode(value, {
+          stream: true,
+        });
+
+        const events = buffer.split("\n\n");
+
+        buffer = events.pop() || "";
+
+        for (const eventText of events) {
+          const dataLine = eventText
+            .split("\n")
+            .find((line) => line.startsWith("data: "));
+
+          if (!dataLine) {
+            continue;
+          }
+
+          const eventData = dataLine.slice(6).trim();
+
+          if (eventData === "[DONE]") {
+            continue;
+          }
+
+          let payload;
+
+          try {
+            payload = JSON.parse(eventData);
+          } catch {
+            console.error("Could not parse SSE event:", eventData);
+            continue;
+          }
+
+          if (payload.type === "token") {
+            setMessages((currentMessages) => {
+              const updatedMessages = [...currentMessages];
+              const lastMessageIndex = updatedMessages.length - 1;
+
+              updatedMessages[lastMessageIndex] = {
+                ...updatedMessages[lastMessageIndex],
+                content:
+                  updatedMessages[lastMessageIndex].content + payload.content,
+              };
+
+              return updatedMessages;
+            });
+          }
+
+          if (payload.type === "sources") {
+            setMessages((currentMessages) => {
+              const updatedMessages = [...currentMessages];
+              const lastMessageIndex = updatedMessages.length - 1;
+
+              updatedMessages[lastMessageIndex] = {
+                ...updatedMessages[lastMessageIndex],
+                sources: payload.content,
+              };
+
+              return updatedMessages;
+            });
+          }
+
+          if (payload.type === "error") {
+            throw new Error(payload.content);
+          }
+        }
+      }
+    } catch (error) {
+      console.error(error);
+
+      setMessages((currentMessages) => {
+        const updatedMessages = [...currentMessages];
+        const lastMessageIndex = updatedMessages.length - 1;
+
+        updatedMessages[lastMessageIndex] = {
+          ...updatedMessages[lastMessageIndex],
+          content: `Error: ${error.message}`,
+        };
+
+        return updatedMessages;
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -48,7 +183,32 @@ function App() {
                 {message.role === "user" ? "You" : "Assistant"}
               </span>
 
-              <p>{message.content}</p>
+              <p>
+                {message.content ||
+                  (isLoading &&
+                  index === messages.length - 1
+                    ? "Thinking..."
+                    : "")}
+              </p>
+
+              {message.sources?.length > 0 && (
+                <div className="sources">
+                  <strong>Sources</strong>
+
+                  {message.sources.map((source, sourceIndex) => (
+                    <a
+                      key={`${source.url}-${sourceIndex}`}
+                      href={source.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="source-link"
+                    >
+                      {source.source}
+                      {source.section ? ` — ${source.section}` : ""}
+                    </a>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -60,10 +220,14 @@ function App() {
             onChange={(event) => setQuestion(event.target.value)}
             placeholder="Ask a question..."
             aria-label="Question"
+            disabled={isLoading}
           />
 
-          <button type="submit">
-            Send
+          <button
+            type="submit"
+            disabled={isLoading || !question.trim()}
+          >
+            {isLoading ? "Generating..." : "Send"}
           </button>
         </form>
       </section>
