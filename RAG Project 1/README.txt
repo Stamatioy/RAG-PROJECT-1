@@ -14,3 +14,6 @@ uvicorn src.api.main:app --reload
 
 To run frontend:
 
+cd "PS D:\Programming\Projects\RAG\Simple RAG\RAG Project 1\frontend"
+
+ npm run dev
